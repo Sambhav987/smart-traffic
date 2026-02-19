@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Smart Traffic Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 10px;
+            width: 95vw;
+            height: 85vh;
+            max-width: 1200px;
+            /* Ensure the grid doesn't collapse */
+            min-height: 600px;
+        }
+
+        .grid-item {
+            position: relative;
+            border: 1px solid #444;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #333;
+            /* Placeholder color for empty slots if needed */
+        }
+
+        /* Specific positioning for Plus Layout */
+        #item-Top {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        #item-Right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        #item-Left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        #item-Bottom {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 25px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            pointer-events: auto;
+            /* Allow interaction with inputs/buttons */
+            z-index: 10;
+        }
+
+        button {
+            margin-top: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Smart Traffic Management Dashboard</h1>
+    <div class="grid-container">
+        <!-- Top Left matches to Top Center in Plus Layout -->
+        <div class="grid-item" id="item-Top">
+            <div class="overlay">
+                Top<br>
+                <input type="file" onchange="uploadVideo('Top', this)" accept="video/*"><br>
+                <button onclick="switchToLive('Top')">Live Camera</button> <br>
+                <button onclick="stopFeed('Top')">Stop Feed</button>
+            </div>
+            <img id="img-Top" src="{% url 'video_feed' 'Top' %}" alt="Camera Top">
+        </div>
+
+        <!-- Top Right matches to Middle Right in Plus Layout -->
+        <div class="grid-item" id="item-Right">
+            <div class="overlay">
+                Right<br>
+                <input type="file" onchange="uploadVideo('Right', this)" accept="video/*"><br>
+                <button onclick="switchToLive('Right')">Live Camera</button> <br>
+                <button onclick="stopFeed('Right')">Stop Feed</button>
+            </div>
+            <img id="img-Right" src="{% url 'video_feed' 'Right' %}" alt="Camera Right">
+        </div>
+
+        <!-- Bottom Left matches to Middle Left in Plus Layout -->
+        <div class="grid-item" id="item-Left">
+            <div class="overlay">
+                Left<br>
+                <input type="file" onchange="uploadVideo('Left', this)" accept="video/*"><br>
+                <button onclick="switchToLive('Left')">Live Camera</button> <br>
+                <button onclick="stopFeed('Left')">Stop Feed</button>
+            </div>
+            <img id="img-Left" src="{% url 'video_feed' 'Left' %}" alt="Camera Left">
+        </div>
+
+        <!-- Bottom Right matches to Bottom Center in Plus Layout -->
+        <div class="grid-item" id="item-Bottom">
+            <div class="overlay">
+                Bottom<br>
+                <input type="file" onchange="uploadVideo('Bottom', this)" accept="video/*"><br>
+                <button onclick="switchToLive('Bottom')">Live Camera</button> <br>
+                <button onclick="stopFeed('Bottom')">Stop Feed</button>
+            </div>
+            <img id="img-Bottom" src="{% url 'video_feed' 'Bottom' %}" alt="Camera Bottom">
+        </div>
+    </div>
+
+    <script>
+        function uploadVideo(section, input) {
+            if (input.files && input.files[0]) {
+                let formData = new FormData();
+                formData.append('video_file', input.files[0]);
+
+                fetch(`/upload_video/${section}/`, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            console.log(`Uploaded video for ${section}: ${data.file_path}`);
+                            refreshFeed(section);
+                        } else {
+                            alert('Upload failed');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error uploading file');
+                    });
+            }
+        }
+
+        function switchToLive(section) {
+            fetch(`/switch_live/${section}/`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log(`Switched ${section} to live camera`);
+                        refreshFeed(section);
+                    } else {
+                        alert('Switch to live failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error switching to live camera');
+                });
+        }
+
+        function stopFeed(section) {
+            fetch(`/stop_feed/${section}/`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log(`Stopped feed for ${section}`);
+                        refreshFeed(section);
+                    } else {
+                        alert('Stop feed failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error stopping feed');
+                });
+        }
+
+        function refreshFeed(section) {
+            let img = document.getElementById(`img-${section}`);
+            let src = img.src.split('?')[0];
+            img.src = `${src}?t=${new Date().getTime()}`;
+        }
+    </script>
+</body>
+
+</html>

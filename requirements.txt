@@ -1,0 +1,7 @@
+django
+opencv-python
+roboflow
+supervision
+psycopg2-binary
+numpy
+ultralytics
