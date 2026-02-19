@@ -2,13 +2,15 @@ import cv2
 import threading
 import time
 import numpy as np
-from roboflow import Roboflow
-import supervision as sv
+# from roboflow import Roboflow
+# import supervision as sv
 from django.conf import settings
 from .models import Congestion, Accident
 from django.utils import timezone
 import os
 from ultralytics import YOLO
+import smtplib
+from email.message import EmailMessage
 
 # Initialize Roboflow Model Globally
 # model = None
@@ -29,12 +31,13 @@ class TrafficStateManager:
         self.detection_counts = {"Top": 0, "Right": 0, "Left": 0, "Bottom": 0}
         self.signals = {"Top": "RED", "Right": "RED", "Left": "RED", "Bottom": "RED"}
         self.signal_group = 0 # 0: U-D Green, 1: L-R Green
-        self.congestion_threshold = 7
+        self.congestion_threshold = 6
         self.last_switch_time = time.time()
         self.min_time = 5
         self.max_time = 15
         self.lock = threading.Lock()
         self.video_sources = {"Top": None, "Right": None, "Left": None, "Bottom": None}
+        self.last_congestion_log_time = 0
 
     def update(self, section, count):
         with self.lock:
@@ -50,12 +53,33 @@ class TrafficStateManager:
         return self.video_sources.get(section, None)
 
     def check_congestion(self):
-        max_count = max(self.detection_counts.values())
+        max_section = max(self.detection_counts, key=self.detection_counts.get)
+        max_count = self.detection_counts[max_section]
+
         if max_count > self.congestion_threshold:
-            # Avoid spamming DB - simplistic check (e.g., once per second)
-            # For now, we trust the caller (VideoCamera) to not be too fast or we just log it
-            # To prevent DB lock/spam, maybe we only log if it wasn't congested recently
-            pass 
+            current_time = time.time()
+            # Rate limit database writes to once every 5 seconds
+            if current_time - self.last_congestion_log_time > 5:
+                timestamp_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+                try:
+                    Congestion.objects.create(timestamp=timestamp_str, num_cars=max_count, section=max_section)
+                    print(f"Logged Congestion: {max_count} cars at {timestamp_str} in {max_section} section")
+                    self.last_congestion_log_time = current_time
+                except Exception as e:
+                    print(f"Error logging congestion: {e}")
+
+                user = "demo69lemonade@gmail.com"
+                password = "njtfjabmchkgqdkr"  # Use app password if 2FA is enabled
+
+                server = smtplib.SMTP("smtp.gmail.com", 587)
+                server.starttls()
+                server.login(user, password)
+                msg = EmailMessage()
+                msg.set_content(f"Hello, a congestion has been detected with {max_count} cars at {timestamp_str} in {max_section} section")
+                msg['from'] = user
+                msg['to'] = "sambhavagarwal6@gmail.com"
+                msg['subject'] = f"Congestion detected at {timestamp_str}"
+                server.send_message(msg)
 
     def update_signals(self):
         current_time = time.time()
@@ -105,8 +129,8 @@ class VideoCamera:
             else:
                 self.video = cv2.VideoCapture(source)
 
-        self.box_annotator = sv.BoxAnnotator()
-        self.label_annotator = sv.LabelAnnotator()
+        # self.box_annotator = sv.BoxAnnotator()
+        # self.label_annotator = sv.LabelAnnotator()
 
     def __del__(self):
         if self.video:
