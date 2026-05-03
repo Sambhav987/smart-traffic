@@ -15,3 +15,17 @@ class Accident(models.Model):
 
     def __str__(self):
         return f"Accident at {self.timestamp}: {self.num_instances} instances in {self.section} section"
+
+class HistoricData(models.Model):
+    timestamp = models.CharField(max_length=25)
+    num_cars_left = models.IntegerField(default=0)
+    num_cars_right = models.IntegerField(default=0)
+    num_cars_top = models.IntegerField(default=0)
+    num_cars_bottom = models.IntegerField(default=0)
+    total_cars = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "historic_data"
+
+    def __str__(self):
+        return f"HistoricData at {self.timestamp}: total {self.total_cars} cars"

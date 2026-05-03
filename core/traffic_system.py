@@ -5,7 +5,7 @@ import numpy as np
 # from roboflow import Roboflow
 # import supervision as sv
 from django.conf import settings
-from .models import Congestion, Accident
+from .models import Congestion, Accident, HistoricData
 from django.utils import timezone
 import os
 from ultralytics import YOLO
@@ -29,7 +29,7 @@ model = YOLO("yolo26n.pt")
 class TrafficStateManager:
     def __init__(self):
         self.detection_counts = {"Top": 0, "Right": 0, "Left": 0, "Bottom": 0}
-        self.signals = {"Top": "RED", "Right": "RED", "Left": "RED", "Bottom": "RED"}
+        self.signals = {"Top": "GREEN", "Right": "RED", "Left": "RED", "Bottom": "GREEN"}
         self.signal_group = 0 # 0: U-D Green, 1: L-R Green
         self.congestion_threshold = 6
         self.last_switch_time = time.time()
@@ -38,12 +38,14 @@ class TrafficStateManager:
         self.lock = threading.Lock()
         self.video_sources = {"Top": None, "Right": None, "Left": None, "Bottom": None}
         self.last_congestion_log_time = 0
+        self.last_historic_data_log_time = 0
 
     def update(self, section, count):
         with self.lock:
             self.detection_counts[section] = count
             self.check_congestion()
             self.update_signals()
+            self.add_historic_record()
 
     def set_video_source(self, section, source):
         with self.lock:
@@ -52,6 +54,22 @@ class TrafficStateManager:
     def get_video_source(self, section):
         return self.video_sources.get(section, None)
 
+    def add_historic_record(self):
+        car_counts = self.detection_counts
+        current_time = time.time()
+        
+        # Rate limit database writes to once every 60 seconds
+        if current_time - self.last_historic_data_log_time > 60:
+            timestamp_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+            try:
+                total = sum(car_counts.values())
+                HistoricData.objects.create(timestamp=timestamp_str, num_cars_left=car_counts["Left"], num_cars_right=car_counts["Right"], num_cars_top=car_counts["Top"], num_cars_bottom=car_counts["Bottom"], total_cars=total)
+                print(f"Logged Historic Data: {total} cars at {timestamp_str}")
+                self.last_historic_data_log_time = current_time
+            except Exception as e:
+                print(f"Error logging historic data: {e}")
+
+            
     def check_congestion(self):
         max_section = max(self.detection_counts, key=self.detection_counts.get)
         max_count = self.detection_counts[max_section]
@@ -59,7 +77,7 @@ class TrafficStateManager:
         if max_count > self.congestion_threshold:
             current_time = time.time()
             # Rate limit database writes to once every 5 seconds
-            if current_time - self.last_congestion_log_time > 5:
+            if current_time - self.last_congestion_log_time > 30:
                 timestamp_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
                 try:
                     Congestion.objects.create(timestamp=timestamp_str, num_cars=max_count, section=max_section)
@@ -87,6 +105,12 @@ class TrafficStateManager:
         
         count_up_down = self.detection_counts["Top"] + self.detection_counts["Bottom"]
         count_left_right = self.detection_counts["Right"] + self.detection_counts["Left"]
+
+        # Don't switch if the opposing group has no cars waiting
+        if self.signal_group == 0 and count_left_right == 0:
+            return
+        if self.signal_group == 1 and count_up_down == 0:
+            return
 
         # Logic from original script
         if self.signal_group == 0: # U-D Green (Top/Bottom? Check original logic)

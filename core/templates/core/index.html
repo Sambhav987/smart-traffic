@@ -86,6 +86,107 @@
             margin-top: 5px;
             cursor: pointer;
         }
+
+        .insights-section {
+            width: 95vw;
+            max-width: 1200px;
+            margin-top: 40px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 20px;
+            min-height: 60vh;
+        }
+
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid #444;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            color: #ccc;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin: 0;
+        }
+
+        .tab-button.active {
+            color: #fff;
+            border-bottom-color: #4a9eff;
+        }
+
+        .tab-content {
+            display: none;
+            min-height: 300px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sub-tab-bar {
+            display: flex;
+            border-bottom: 1px solid #444;
+            margin: 15px 0 20px;
+        }
+
+        .sub-tab-button {
+            background: none;
+            border: none;
+            color: #bbb;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin: 0;
+        }
+
+        .sub-tab-button.active {
+            color: #fff;
+            border-bottom-color: #4a9eff;
+        }
+
+        .sub-tab-content {
+            display: none;
+            min-height: 200px;
+        }
+
+        .sub-tab-content.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            color: #ddd;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #444;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .data-table tr:nth-child(even) td {
+            background-color: #2f2f2f;
+        }
+
+        .empty-row {
+            color: #888;
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -137,7 +238,121 @@
         </div>
     </div>
 
+    <div class="insights-section">
+        <div class="tab-bar">
+            <button class="tab-button active" onclick="switchTab('intersection-insights')">Intersection Insights</button>
+            <button class="tab-button" onclick="switchTab('historic-details')">Historic Details</button>
+        </div>
+        <div id="intersection-insights" class="tab-content active">
+            <h2>Intersection Insights</h2>
+        </div>
+        <div id="historic-details" class="tab-content">
+            <h2>Historic Details</h2>
+            <div class="sub-tab-bar">
+                <button class="sub-tab-button active" onclick="switchSubTab(event, 'historic-traffic')">Historic Traffic</button>
+                <button class="sub-tab-button" onclick="switchSubTab(event, 'congestion-details')">Congestion Details</button>
+                <button class="sub-tab-button" onclick="switchSubTab(event, 'accident-details')">Accident Details</button>
+            </div>
+            <div id="historic-traffic" class="sub-tab-content active">
+                <h3>Historic Traffic</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Timestamp</th>
+                            <th>Top</th>
+                            <th>Bottom</th>
+                            <th>Left</th>
+                            <th>Right</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in historic_data %}
+                        <tr>
+                            <td>{{ h.id }}</td>
+                            <td>{{ h.timestamp }}</td>
+                            <td>{{ h.num_cars_top }}</td>
+                            <td>{{ h.num_cars_bottom }}</td>
+                            <td>{{ h.num_cars_left }}</td>
+                            <td>{{ h.num_cars_right }}</td>
+                            <td>{{ h.total_cars }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="empty-row">No historic data yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="congestion-details" class="sub-tab-content">
+                <h3>Congestion Details</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Timestamp</th>
+                            <th>Section</th>
+                            <th>Number of Cars</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in congestions %}
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>{{ c.timestamp }}</td>
+                            <td>{{ c.section }}</td>
+                            <td>{{ c.num_cars }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="empty-row">No congestion records yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="accident-details" class="sub-tab-content">
+                <h3>Accident Details</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Timestamp</th>
+                            <th>Section</th>
+                            <th>Number of Instances</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in accidents %}
+                        <tr>
+                            <td>{{ a.id }}</td>
+                            <td>{{ a.timestamp }}</td>
+                            <td>{{ a.section }}</td>
+                            <td>{{ a.num_instances }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="empty-row">No accident records yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function switchSubTab(event, tabId) {
+            const parent = event.currentTarget.closest('.tab-content');
+            parent.querySelectorAll('.sub-tab-content').forEach(el => el.classList.remove('active'));
+            parent.querySelectorAll('.sub-tab-button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
         function uploadVideo(section, input) {
             if (input.files && input.files[0]) {
                 let formData = new FormData();

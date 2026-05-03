@@ -5,9 +5,17 @@ from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import os
 from .traffic_system import VideoCamera, traffic_state
+from .models import Congestion, Accident, HistoricData
 
 def index(request):
-    return render(request, 'core/index.html')
+    congestions = Congestion.objects.all().order_by('-id')
+    accidents = Accident.objects.all().order_by('-id')
+    historic_data = HistoricData.objects.all().order_by('-id')
+    return render(request, 'core/index.html', {
+        'congestions': congestions,
+        'accidents': accidents,
+        'historic_data': historic_data,
+    })
 
 def gen(camera):
     while True:
