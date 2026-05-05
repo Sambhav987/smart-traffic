@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-jt!yxgiyjd++emqkto2v@1wm9npnke__^(wab0=c-$x90squbz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.73', '*']
 
 
 # Application definition
@@ -121,3 +121,4 @@ import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+FIREBASE_CREDENTIALS_PATH = r"C:\Users\Sambhav\Desktop\smart-traffic-1a5a6-firebase-adminsdk-fbsvc-a23248033c.json"

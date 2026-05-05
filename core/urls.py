@@ -7,6 +7,8 @@ urlpatterns = [
     path('upload_video/<str:section>/', views.upload_video, name='upload_video'),
     path('switch_live/<str:section>/', views.switch_live, name='switch_live'),
     path('stop_feed/<str:section>/', views.stop_feed, name='stop_feed'),
+    path('notify_emergency/<str:section>/', views.notify_emergency, name='notify_emergency'),
+    path("api/push-tokens/register/", views.register_push_token),
 ]
 
 from django.conf import settings

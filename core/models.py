@@ -29,3 +29,12 @@ class HistoricData(models.Model):
 
     def __str__(self):
         return f"HistoricData at {self.timestamp}: total {self.total_cars} cars"
+
+
+class PushToken(models.Model):
+    token = models.CharField(max_length=200, unique=True)
+    platform = models.CharField(max_length=20, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.token

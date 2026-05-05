@@ -87,6 +87,32 @@
             cursor: pointer;
         }
 
+        .emergency-bar {
+            width: 95vw;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .emergency-btn {
+            flex: 1;
+            background-color: #c0392b;
+            color: #fff;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 0;
+        }
+
+        .emergency-btn:hover {
+            background-color: #e74c3c;
+        }
+
         .insights-section {
             width: 95vw;
             max-width: 1200px;
@@ -238,6 +264,13 @@
         </div>
     </div>
 
+    <div class="emergency-bar">
+        <button class="emergency-btn" onclick="notifyEmergency('Top')">🚨 Notify Emergency — Top</button>
+        <button class="emergency-btn" onclick="notifyEmergency('Left')">🚨 Notify Emergency — Left</button>
+        <button class="emergency-btn" onclick="notifyEmergency('Right')">🚨 Notify Emergency — Right</button>
+        <button class="emergency-btn" onclick="notifyEmergency('Bottom')">🚨 Notify Emergency — Bottom</button>
+    </div>
+
     <div class="insights-section">
         <div class="tab-bar">
             <button class="tab-button active" onclick="switchTab('intersection-insights')">Intersection Insights</button>
@@ -245,6 +278,9 @@
         </div>
         <div id="intersection-insights" class="tab-content active">
             <h2>Intersection Insights</h2>
+            <p>
+                
+            </p>
         </div>
         <div id="historic-details" class="tab-content">
             <h2>Historic Details</h2>
@@ -413,6 +449,25 @@
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Error stopping feed');
+                });
+        }
+
+        function notifyEmergency(section) {
+            fetch(`/notify_emergency/${section}/`, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log(`Emergency push sent for ${section}`);
+                        alert(`Emergency vehicle notification sent for ${section}.`);
+                    } else {
+                        alert(`Failed to send emergency notification: ${data.message}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error sending emergency notification');
                 });
         }
 

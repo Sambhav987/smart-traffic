@@ -11,6 +11,7 @@ import os
 from ultralytics import YOLO
 import smtplib
 from email.message import EmailMessage
+from core.services.push import send_push
 
 # Initialize Roboflow Model Globally
 # model = None
@@ -24,7 +25,8 @@ from email.message import EmailMessage
 
 # Using YOLOv8
 model = YOLO("yolo26n.pt")
-
+intersection_id = 1
+intersection_name = "Ruby Crossing"
 # Simplified Singleton for State
 class TrafficStateManager:
     def __init__(self):
@@ -98,6 +100,15 @@ class TrafficStateManager:
                 msg['to'] = "sambhavagarwal6@gmail.com"
                 msg['subject'] = f"Congestion detected at {timestamp_str}"
                 server.send_message(msg)
+                
+                send_push(
+                    title="Congestion detected",
+                    body=f"At {max_section}",
+                    data={
+                        "intersectionId": intersection_id,
+                        "intersectionName": intersection_name,
+                    },
+                )
 
     def update_signals(self):
         current_time = time.time()
@@ -105,7 +116,42 @@ class TrafficStateManager:
         
         count_up_down = self.detection_counts["Top"] + self.detection_counts["Bottom"]
         count_left_right = self.detection_counts["Right"] + self.detection_counts["Left"]
+        
+        # new part
+        
+        total = count_up_down + count_left_right
 
+        if self.signal_group == 0 and count_left_right == 0:
+            return
+        if self.signal_group == 1 and count_up_down == 0:
+            return
+        
+        if total > 0:
+            ud_ratio = count_up_down / total
+            lr_ratio = count_left_right / total
+        else:
+            ud_ratio = lr_ratio = 0.5
+            
+        min_green = 5
+        max_green = 15
+
+        ud_green_time = min_green + ud_ratio * (max_green - min_green)
+        lr_green_time = min_green + lr_ratio * (max_green - min_green)
+                
+        
+        if self.signal_group == 0:
+            if elapsed > ud_green_time:
+                self.signal_group = 1
+                self.last_switch_time = current_time
+
+        else:
+            if elapsed > lr_green_time:
+                self.signal_group = 0
+                self.last_switch_time = current_time
+        
+        
+        # changed the below part 
+        '''
         # Don't switch if the opposing group has no cars waiting
         if self.signal_group == 0 and count_left_right == 0:
             return
@@ -123,7 +169,7 @@ class TrafficStateManager:
             if (count_up_down > 1.25 * count_left_right and elapsed > self.min_time) or elapsed > self.max_time:
                 self.signal_group = 0
                 self.last_switch_time = current_time
-
+        '''
         if self.signal_group == 0:
             # Top/Bottom Green
             self.signals["Top"] = "GREEN"

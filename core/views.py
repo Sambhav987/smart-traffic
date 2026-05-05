@@ -4,8 +4,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import os
-from .traffic_system import VideoCamera, traffic_state
-from .models import Congestion, Accident, HistoricData
+from .traffic_system import VideoCamera, traffic_state, intersection_id, intersection_name
+from .models import Congestion, Accident, HistoricData, PushToken
+from core.services.push import send_push
+import json
+from django.views.decorators.http import require_POST
 
 def index(request):
     congestions = Congestion.objects.all().order_by('-id')
@@ -60,4 +63,39 @@ def stop_feed(request, section):
         return JsonResponse({'status': 'success', 'message': f'Stopped feed for {section}'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
+@csrf_exempt
+@require_POST
+def notify_emergency(request, section):
+    try:
+        send_push(
+            title="Emergency vehicle approaching",
+            body=f"Emergency vehicle reported at {section}",
+            data={
+                "intersectionId": intersection_id,
+                "intersectionName": intersection_name,
+                "section": section,
+                "type": "emergency",
+            },
+        )
+        return JsonResponse({'status': 'success', 'message': f'Emergency notification sent for {section}'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+
+@csrf_exempt
+@require_POST
+def register_push_token(request):
+    try:
+        body = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid json"}, status=400)
+
+    token = body.get("token")
+    if not token:
+        return JsonResponse({"error": "token required"}, status=400)
+
+    PushToken.objects.update_or_create(
+        token=token,
+        defaults={"platform": body.get("platform", "")},
+    )
+    return JsonResponse({"ok": True})
