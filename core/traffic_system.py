@@ -13,6 +13,7 @@ import smtplib
 from email.message import EmailMessage
 from core.services.push import send_push
 
+
 # Initialize Roboflow Model Globally
 # model = None
 # try:

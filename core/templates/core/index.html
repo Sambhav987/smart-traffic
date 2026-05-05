@@ -87,26 +87,30 @@
             cursor: pointer;
         }
 
-        .emergency-bar {
-            width: 95vw;
-            max-width: 1200px;
+        .emergency-cell {
             display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            margin-top: 20px;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
         }
 
+        #cell-emergency-Top    { grid-column: 1; grid-row: 1; }
+        #cell-emergency-Right  { grid-column: 3; grid-row: 1; }
+        #cell-emergency-Left   { grid-column: 1; grid-row: 3; }
+        #cell-emergency-Bottom { grid-column: 3; grid-row: 3; }
+
         .emergency-btn {
-            flex: 1;
             background-color: #c0392b;
             color: #fff;
             border: none;
-            padding: 10px 12px;
-            border-radius: 4px;
+            padding: 5px 8px;
+            border-radius: 3px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
             cursor: pointer;
             margin-top: 0;
+            white-space: normal;
+            line-height: 1.2;
         }
 
         .emergency-btn:hover {
@@ -262,13 +266,19 @@
             </div>
             <img id="img-Bottom" src="{% url 'video_feed' 'Bottom' %}" alt="Camera Bottom">
         </div>
-    </div>
 
-    <div class="emergency-bar">
-        <button class="emergency-btn" onclick="notifyEmergency('Top')">🚨 Notify Emergency — Top</button>
-        <button class="emergency-btn" onclick="notifyEmergency('Left')">🚨 Notify Emergency — Left</button>
-        <button class="emergency-btn" onclick="notifyEmergency('Right')">🚨 Notify Emergency — Right</button>
-        <button class="emergency-btn" onclick="notifyEmergency('Bottom')">🚨 Notify Emergency — Bottom</button>
+        <div class="emergency-cell" id="cell-emergency-Top">
+            <button class="emergency-btn" onclick="notifyEmergency('Top')">🚨 Emergency<br>Top</button>
+        </div>
+        <div class="emergency-cell" id="cell-emergency-Right">
+            <button class="emergency-btn" onclick="notifyEmergency('Right')">🚨 Emergency<br>Right</button>
+        </div>
+        <div class="emergency-cell" id="cell-emergency-Left">
+            <button class="emergency-btn" onclick="notifyEmergency('Left')">🚨 Emergency<br>Left</button>
+        </div>
+        <div class="emergency-cell" id="cell-emergency-Bottom">
+            <button class="emergency-btn" onclick="notifyEmergency('Bottom')">🚨 Emergency<br>Bottom</button>
+        </div>
     </div>
 
     <div class="insights-section">
@@ -279,7 +289,7 @@
         <div id="intersection-insights" class="tab-content active">
             <h2>Intersection Insights</h2>
             <p>
-                
+                The traffic is smooth right now. Based on previous trends at this time of the day, expecting heavier flow with 100 vehiles per minute in the next hour. The flow is expected to be distributed as 60-40 with heavier traffic on Top-Down road.
             </p>
         </div>
         <div id="historic-details" class="tab-content">
