@@ -38,3 +38,15 @@ class PushToken(models.Model):
 
     def __str__(self):
         return self.token
+
+
+class MaxWaitTime(models.Model):
+    timestamp = models.CharField(max_length=25)
+    group = models.CharField(max_length=10, default="Unknown")  # "UD" or "LR"
+    max_wait_time = models.FloatField(default=0.0)
+
+    class Meta:
+        db_table = "max_wait_time"
+
+    def __str__(self):
+        return f"MaxWaitTime at {self.timestamp}: {self.max_wait_time:.2f}s ({self.group})"

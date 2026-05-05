@@ -5,7 +5,7 @@ import numpy as np
 # from roboflow import Roboflow
 # import supervision as sv
 from django.conf import settings
-from .models import Congestion, Accident, HistoricData
+from .models import Congestion, Accident, HistoricData, MaxWaitTime
 from django.utils import timezone
 import os
 from ultralytics import YOLO
@@ -142,11 +142,24 @@ class TrafficStateManager:
         
         if self.signal_group == 0:
             if elapsed > ud_green_time:
+                timestamp_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+                try:
+                    MaxWaitTime.objects.create(timestamp=timestamp_str, group="UD", max_wait_time=elapsed)
+                    print(f"Logged MaxWaitTime: UD held green for {elapsed:.2f}s at {timestamp_str}")
+                except Exception as e:
+                    print(f"Error logging max wait time: {e}")
                 self.signal_group = 1
                 self.last_switch_time = current_time
 
+
         else:
             if elapsed > lr_green_time:
+                timestamp_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+                try:
+                    MaxWaitTime.objects.create(timestamp=timestamp_str, group="LR", max_wait_time=elapsed)
+                    print(f"Logged MaxWaitTime: LR held green for {elapsed:.2f}s at {timestamp_str}")
+                except Exception as e:
+                    print(f"Error logging max wait time: {e}")
                 self.signal_group = 0
                 self.last_switch_time = current_time
         

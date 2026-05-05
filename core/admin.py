@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import Congestion, Accident, HistoricData
+from .models import Congestion, Accident, HistoricData, MaxWaitTime
 
 @admin.register(Congestion)
 class CongestionAdmin(admin.ModelAdmin):
@@ -16,3 +16,8 @@ class AccidentAdmin(admin.ModelAdmin):
 class HistoricDataAdmin(admin.ModelAdmin):
     list_display = ('timestamp', 'num_cars_top', 'num_cars_bottom', 'num_cars_left', 'num_cars_right', 'total_cars')
     search_fields = ('timestamp',)
+
+@admin.register(MaxWaitTime)
+class MaxWaitTimeAdmin(admin.ModelAdmin):
+    list_display = ('timestamp', 'group', 'max_wait_time')
+    search_fields = ('timestamp', 'group')
